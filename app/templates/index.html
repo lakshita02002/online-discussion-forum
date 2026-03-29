@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+{% if session.get('user_id') %}
+  <div class="feed-prompt">
+    <p class="feed-prompt__label">&#128172; What's on your mind, {{ session['username'] }}?</p>
+    <a href="{{ url_for('posts.create') }}" class="create-bar"
+       aria-label="Share an idea or start a discussion">
+      <span class="avatar">{{ session['username'][0] | upper }}</span>
+      <span class="create-bar__input">
+        <span class="create-bar__prompt">Share an idea, ask a question, or start a debate...</span>
+        <span class="create-bar__icon" aria-hidden="true">&#9998;</span>
+      </span>
+    </a>
+  </div>
+{% else %}
+  {# Anonymous visitors see the full marketing hero. #}
+  <section class="hero">
+    <div class="hero__text">
+      <h1 class="hero__title">Welcome to Nexus Forum</h1>
+      <p class="hero__sub">A place to discuss ideas, ask questions, and share knowledge.</p>
+      <div class="hero__actions">
+        <a href="{{ url_for('auth.register') }}" class="btn btn--primary">Get Started</a>
+        <a href="{{ url_for('auth.login') }}"    class="btn btn--ghost">Log In</a>
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+<section class="post-list-section">
+  <div class="post-list-header">
+    <h2 class="section-title">Latest Discussions</h2>
+    <span class="post-count">{{ total }} post{{ 's' if total != 1 }}</span>
+  </div>
+
+  {% if posts %}
+    <ul class="post-list" role="list">
+      {% for post in posts %}
+        <li class="post-card">
+          {# Wrapping body + excerpt in one <a> makes the whole content area
+             clickable — only title text was previously interactive. The meta
+             row (author / actions) is deliberately kept outside the link. #}
+          <a class="post-card__link" href="{{ url_for('posts.detail', post_id=post['id']) }}">
+            <div class="post-card__body">
+              <h3 class="post-card__title">{{ post['title'] }}</h3>
+              <p class="post-card__excerpt">
+                {{ post['content'][:160] }}{% if post['content']|length > 160 %}&hellip;{% endif %}
+              </p>
+            </div>
+          </a>
+          <footer class="post-card__meta">
+            <span class="post-card__author">
+              <span class="avatar">{{ post['author_name'][0]|upper }}</span>
+              {{ post['author_name'] }}
+            </span>
+            <span class="comment-count" title="{{ post['comment_count'] }} comment{{ 's' if post['comment_count'] != 1 }}">
+              &#128172; {{ post['comment_count'] }}
+            </span>
+            <time class="post-card__date" datetime="{{ post['created_at'][:10] }}">
+              {{ post['created_at'] | fmtdate }}
+            </time>
+            {% if session.get('user_id') == post['author_id'] %}
+              {# div, not span — <form> is a block element and cannot be inside <span> #}
+              <div class="post-card__actions">
+                <a href="{{ url_for('posts.edit', post_id=post['id']) }}" class="link-edit">Edit</a>
+                <form method="post" action="{{ url_for('posts.delete', post_id=post['id']) }}"
+                      onsubmit="return confirm('Delete this post?');" style="display:contents;">
+                  <button type="submit" class="link-delete">Delete</button>
+                </form>
+              </div>
+            {% endif %}
+          </footer>
+        </li>
+      {% endfor %}
+    </ul>
+
+    <!-- Pagination -->
+    <nav class="pagination" aria-label="Post navigation">
+      {% if has_prev %}
+        <a href="{{ url_for('posts.index', page=page-1) }}" class="btn btn--ghost btn--sm">&larr; Newer</a>
+      {% endif %}
+      <span class="pagination__info">Page {{ page }}</span>
+      {% if has_next %}
+        <a href="{{ url_for('posts.index', page=page+1) }}" class="btn btn--ghost btn--sm">Older &rarr;</a>
+      {% endif %}
+    </nav>
+
+  {% else %}
+    <div class="empty-state">
+      <p class="empty-state__icon">&#128172;</p>
+      <p class="empty-state__text">No discussions yet. Be the first to start one!</p>
+      {% if session.get('user_id') %}
+        <a href="{{ url_for('posts.create') }}" class="btn btn--primary">Create a Post</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+

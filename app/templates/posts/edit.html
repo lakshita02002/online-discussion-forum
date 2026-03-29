@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Edit Post{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-page__header">
+    <a href="{{ url_for('posts.detail', post_id=post['id']) }}" class="back-link">&larr; Back to post</a>
+    <h1 class="form-page__title">Edit Discussion</h1>
+    <p class="form-page__sub">Update the content of your post.</p>
+  </div>
+
+  <form class="form form--wide" method="post"
+        action="{{ url_for('posts.edit', post_id=post['id']) }}" novalidate>
+    <div class="form__group">
+      <label class="form__label" for="title">Title <span class="required">*</span></label>
+      <input
+        class="form__input"
+        type="text"
+        id="title"
+        name="title"
+        value="{{ title if title is defined else post['title'] }}"
+        required
+        minlength="5"
+        maxlength="200"
+        autofocus
+      />
+      <small class="form__hint">5–200 characters.</small>
+    </div>
+
+    <div class="form__group">
+      <label class="form__label" for="content">Body <span class="required">*</span></label>
+      <textarea
+        class="form__textarea"
+        id="content"
+        name="content"
+        required
+        minlength="10"
+        rows="12"
+      >{{ content if content is defined else post['content'] }}</textarea>
+    </div>
+
+    <div class="form__actions">
+      <a href="{{ url_for('posts.detail', post_id=post['id']) }}" class="btn btn--ghost">Cancel</a>
+      <button type="submit" class="btn btn--primary">Save Changes</button>
+    </div>
+  </form>
+
+  <div class="danger-zone">
+    <h3 class="danger-zone__title">Danger Zone</h3>
+    <p class="danger-zone__desc">Deleting a post is permanent and cannot be undone.</p>
+    <form method="post" action="{{ url_for('posts.delete', post_id=post['id']) }}"
+          onsubmit="return confirm('Are you sure you want to permanently delete this post?');">
+      <button type="submit" class="btn btn--danger">Delete This Post</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

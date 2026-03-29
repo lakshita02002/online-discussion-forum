@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}New Post{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-page__header">
+    <a href="{{ url_for('posts.index') }}" class="back-link">&larr; Back to discussions</a>
+    <h1 class="form-page__title">Start a New Discussion</h1>
+    <p class="form-page__sub">Share a question, idea, or anything worth talking about.</p>
+  </div>
+
+  <form class="form form--wide" method="post" action="{{ url_for('posts.create') }}" novalidate>
+    <div class="form__group">
+      <label class="form__label" for="title">Title <span class="required">*</span></label>
+      <input
+        class="form__input"
+        type="text"
+        id="title"
+        name="title"
+        value="{{ title | default('') }}"
+        required
+        minlength="5"
+        maxlength="200"
+        autofocus
+        placeholder="What's on your mind?"
+      />
+      <small class="form__hint">5–200 characters. Make it descriptive!</small>
+    </div>
+
+    <div class="form__group">
+      <label class="form__label" for="content">Body <span class="required">*</span></label>
+      <textarea
+        class="form__textarea"
+        id="content"
+        name="content"
+        required
+        minlength="10"
+        rows="12"
+        placeholder="Write your post here… be clear and thorough."
+      >{{ content | default('') }}</textarea>
+      <small class="form__hint">At least 10 characters.</small>
+    </div>
+
+    <div class="form__actions">
+      <a href="{{ url_for('posts.index') }}" class="btn btn--ghost">Cancel</a>
+      <button type="submit" class="btn btn--primary">Publish Post</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}{{ post['title'] }}{% endblock %}
+
+{% block content %}
+<article class="post-detail">
+
+  <header class="post-detail__header">
+    <a href="{{ url_for('posts.index') }}" class="back-link">&larr; All discussions</a>
+    <h1 class="post-detail__title">{{ post['title'] }}</h1>
+    <div class="post-detail__meta">
+      <span class="avatar avatar--md">{{ post['author_name'][0]|upper }}</span>
+      <div class="post-detail__meta-info">
+        <span class="post-detail__author">{{ post['author_name'] }}</span>
+        <time datetime="{{ post['created_at'][:10] }}">
+          Posted {{ post['created_at'] | fmtdate }}
+          {% if post['updated_at'] != post['created_at'] %}
+            &middot; Edited {{ post['updated_at'] | fmtdate }}
+          {% endif %}
+        </time>
+      </div>
+      {% if session.get('user_id') == post['author_id'] %}
+        <div class="post-detail__owner-actions">
+          <a href="{{ url_for('posts.edit', post_id=post['id']) }}" class="btn btn--ghost btn--sm">&#9998; Edit</a>
+          <form method="post" action="{{ url_for('posts.delete', post_id=post['id']) }}"
+                onsubmit="return confirm('Delete this post and all its comments?');" style="display:inline;">
+            <button type="submit" class="btn btn--danger btn--sm">&#128465; Delete</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="post-detail__body">
+    {{ post['content'] | nl2br }}
+  </div>
+
+</article>
+
+<section class="comments" id="comments">
+  <h2 class="comments__title">
+    {{ comments | length }} Comment{{ 's' if comments | length != 1 }}
+  </h2>
+
+  {% if comments %}
+    <ul class="comment-list" role="list">
+      {% for c in comments %}
+        <li class="comment-card" id="comment-{{ c['id'] }}">
+          <div class="comment-card__header">
+            <span class="avatar avatar--sm">{{ c['author_name'][0]|upper }}</span>
+            <strong class="comment-card__author">{{ c['author_name'] }}</strong>
+            <time class="comment-card__date" datetime="{{ c['created_at'] }}">
+              {{ c['created_at'] | fmtdate }}
+            </time>
+            {% if session.get('user_id') == c['author_id'] %}
+              <form method="post"
+                    action="{{ url_for('posts.delete_comment', comment_id=c['id']) }}"
+                    onsubmit="return confirm('Remove this comment?');"
+                    class="comment-card__delete">
+                <button type="submit" class="link-delete" title="Delete comment">&#10005;</button>
+              </form>
+            {% endif %}
+          </div>
+          <p class="comment-card__body">{{ c['content'] }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty-comments">No comments yet. Be the first to reply!</p>
+  {% endif %}
+
+  {% if session.get('user_id') %}
+    <form class="comment-form form" method="post"
+          action="{{ url_for('posts.add_comment', post_id=post['id']) }}" novalidate>
+      <div class="form__group">
+        <label class="form__label" for="comment-content">Leave a reply</label>
+        <textarea
+          class="form__textarea form__textarea--sm"
+          id="comment-content"
+          name="content"
+          rows="4"
+          required
+          minlength="2"
+          placeholder="Share your thoughts…"
+        ></textarea>
+      </div>
+      <div class="form__actions">
+        <button type="submit" class="btn btn--primary">Post Reply</button>
+      </div>
+    </form>
+  {% else %}
+    <div class="login-prompt">
+      <a href="{{ url_for('auth.login') }}" class="btn btn--ghost">Log in to comment</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
