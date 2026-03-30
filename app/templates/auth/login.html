@@ -12,14 +12,14 @@
     <form class="form" method="post" action="{{ url_for('auth.login') }}" novalidate>
       <input type="hidden" name="next" value="{{ next | default('') }}" />
       <div class="form__group">
-        <label class="form__label" for="identifier">Username or Email</label>
+        <label class="form__label" for="identifier">Email Address</label>
         <input
           class="form__input"
-          type="text"
+          type="email"
           id="identifier"
           name="identifier"
           value="{{ identifier | default('') }}"
-          autocomplete="username"
+          autocomplete="email"
           autofocus
           required
           placeholder="you@example.com"

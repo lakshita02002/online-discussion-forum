@@ -1,57 +1,23 @@
-"""
-Low-level SQLite helpers. One connection per request via Flask's g proxy;
-rows are sqlite3.Row objects (column access by name).
-"""
+from supabase import create_client, Client
+from flask import current_app
 
-import sqlite3
-import os
-from flask import g, current_app
+_supabase_client: Client | None = None
 
 
-def get_db():
-    """Return the SQLite connection for the current request, opening it if needed."""
-    if "db" not in g:
-        db_path = current_app.config["DATABASE"]
-        g.db = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)
-        g.db.row_factory = sqlite3.Row          # access columns by name
-        g.db.execute("PRAGMA foreign_keys = ON") # enforce FK constraints
-    return g.db
+def get_supabase() -> Client:
+    """Return the shared Supabase client (service role), created once per process.
 
-
-def close_db(exception=None):
-    """Close the connection at request teardown (registered via teardown_appcontext)."""
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
-
-
-def init_db(app):
-    """Execute schema.sql. Safe to call repeatedly — CREATE TABLE uses IF NOT EXISTS."""
-    schema_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "schema.sql"
-    )
-    db_path = app.config["DATABASE"]
-
-    conn = sqlite3.connect(db_path)
-    conn.execute("PRAGMA foreign_keys = ON")
-    with open(schema_path, "r") as f:
-        conn.executescript(f.read())
-    conn.commit()
-    conn.close()
-
-
-def query_db(sql: str, args: tuple = (), one: bool = False):
-    """Run a SELECT. Returns a single Row (or None) when one=True, else a list."""
-    cur = get_db().execute(sql, args)
-    rows = cur.fetchall()
-    cur.close()
-    return (rows[0] if rows else None) if one else rows
-
-
-def execute_db(sql: str, args: tuple = ()):
-    """Run an INSERT/UPDATE/DELETE, commit, and return lastrowid."""
-    db = get_db()
-    cur = db.execute(sql, args)
-    db.commit()
-    return cur.lastrowid
+    The service role key bypasses RLS — access control is enforced in
+    Flask route handlers via session["user_id"] checks instead.
+    """
+    global _supabase_client
+    if _supabase_client is None:
+        url = current_app.config["SUPABASE_URL"]
+        key = current_app.config["SUPABASE_SERVICE_KEY"]
+        if not url or not key:
+            raise RuntimeError(
+                "SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in the environment."
+            )
+        _supabase_client = create_client(url, key)
+    return _supabase_client
 

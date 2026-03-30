@@ -19,7 +19,6 @@ from flask import (
     url_for, session, flash, abort, current_app
 )
 from .models import Post, Comment
-from .database import query_db
 
 posts_bp = Blueprint("posts", __name__)
 
@@ -64,7 +63,7 @@ def index():
     )
 
 
-@posts_bp.route("/post/<int:post_id>")
+@posts_bp.route("/post/<post_id>")
 def detail(post_id):
     post = Post.get_by_id(post_id)
     if post is None:
@@ -93,7 +92,7 @@ def create():
     return render_template("posts/create.html")
 
 
-@posts_bp.route("/post/<int:post_id>/edit", methods=["GET", "POST"])
+@posts_bp.route("/post/<post_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit(post_id):
     post = Post.get_by_id(post_id)
@@ -119,7 +118,7 @@ def edit(post_id):
     return render_template("posts/edit.html", post=post)
 
 
-@posts_bp.route("/post/<int:post_id>/delete", methods=["POST"])
+@posts_bp.route("/post/<post_id>/delete", methods=["POST"])
 @login_required
 def delete(post_id):
     post = Post.get_by_id(post_id)
@@ -132,7 +131,7 @@ def delete(post_id):
     return redirect(url_for("posts.index"))
 
 
-@posts_bp.route("/post/<int:post_id>/comment", methods=["POST"])
+@posts_bp.route("/post/<post_id>/comment", methods=["POST"])
 @login_required
 def add_comment(post_id):
     post = Post.get_by_id(post_id)
@@ -147,10 +146,10 @@ def add_comment(post_id):
     return redirect(url_for("posts.detail", post_id=post_id))
 
 
-@posts_bp.route("/comment/<int:comment_id>/delete", methods=["POST"])
+@posts_bp.route("/comment/<comment_id>/delete", methods=["POST"])
 @login_required
 def delete_comment(comment_id):
-    row = query_db("SELECT * FROM comments WHERE id = ?", (comment_id,), one=True)
+    row = Comment.get_by_id(comment_id)
     if row is None:
         abort(404)
     if row["author_id"] != session["user_id"]:
